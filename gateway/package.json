@@ -1,0 +1,24 @@
+{
+  "name": "pecule-bank-gateway",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env sandbox",
+    "deploy:sandbox": "wrangler deploy --env sandbox --var DATA_PROTECTION_EMAIL:${DATA_PROTECTION_EMAIL:?export DATA_PROTECTION_EMAIL first}",
+    "deploy:production": "wrangler deploy --env production --var DATA_PROTECTION_EMAIL:${DATA_PROTECTION_EMAIL:?export DATA_PROTECTION_EMAIL first}",
+    "test": "vitest run && npm run test:runtime",
+    "test:runtime": "node --test test/*.runtime.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "jose": "6.2.12"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "esbuild": "0.28.2",
+    "miniflare": "5.20260911.0-alpha",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.131.0"
+  }
+}

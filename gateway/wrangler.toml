@@ -1,0 +1,56 @@
+name = "lifeos-bank-gateway"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# Always target an explicit environment: --env sandbox | --env production
+# Secrets (never in this file), per environment:
+#   npx wrangler secret put EB_APP_ID --env <env>
+#   npx wrangler secret put EB_PRIVATE_KEY_PEM --env <env> < <app-id>.pem
+#   npx wrangler secret put GATEWAY_BEARER_TOKEN --env <env>   # value: openssl rand -base64 32
+#   npx wrangler secret put ACCOUNT_HASH_SALT --env <env>   # never rotate: it keys accounts without identification_hash
+# Bearer rotation without downtime:
+#   1. secret put GATEWAY_BEARER_TOKEN_PREVIOUS  (paste the current token)
+#   2. secret put GATEWAY_BEARER_TOKEN           (paste the new token)
+#   3. update the token in the app (Réglages › Configurer la passerelle)
+#   4. secret delete GATEWAY_BEARER_TOKEN_PREVIOUS
+# DATA_PROTECTION_EMAIL (shown on /privacy and /terms) is not stored in this file: deploy scripts pass it with
+#   --var DATA_PROTECTION_EMAIL:$DATA_PROTECTION_EMAIL (export it first; the placeholder below is never deployed).
+# Failed authentications are throttled per client IP by the AUTH_RATE_LIMITER binding.
+
+[env.sandbox]
+name = "lifeos-bank-gateway-sandbox"
+
+[env.sandbox.vars]
+ENVIRONMENT = "sandbox"
+EB_BASE_URL = "https://api.enablebanking.com"
+APP_CALLBACK_URL = "lifeos://link"
+GATEWAY_PUBLIC_URL = "https://lifeos-bank-gateway-sandbox.lifeos-bank-gateway.workers.dev"
+DATA_PROTECTION_EMAIL = "set-at-deploy@example.invalid"
+
+[[env.sandbox.kv_namespaces]]
+binding = "LINKS"
+id = "edfdce1889e246fdb31830016571714a"
+
+[[env.sandbox.ratelimits]]
+name = "AUTH_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 20, period = 60 }
+
+[env.production]
+name = "lifeos-bank-gateway"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+EB_BASE_URL = "https://api.enablebanking.com"
+APP_CALLBACK_URL = "lifeos://link"
+GATEWAY_PUBLIC_URL = "https://lifeos-bank-gateway.lifeos-bank-gateway.workers.dev"
+DATA_PROTECTION_EMAIL = "set-at-deploy@example.invalid"
+
+[[env.production.kv_namespaces]]
+binding = "LINKS"
+id = "8144999367ec4ac9a033d1724dfeef78"
+
+[[env.production.ratelimits]]
+name = "AUTH_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 20, period = 60 }

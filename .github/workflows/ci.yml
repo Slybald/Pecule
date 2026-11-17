@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Quelques secondes sur Linux, avant de réserver un exécuteur macOS : ce que ce contrôle
+  # protège ne se voit autrement qu'à la première migration cassée chez un utilisateur.
+  frozen-schemas:
+    name: Schémas historiques figés
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: tools/automation/check_frozen_schemas.sh
+
+  ios-unit-tests:
+    name: iOS unit tests
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_APP="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          echo "Using $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run unit tests
+        run: tools/automation/run_unit_tests.sh
+
+      # Les scripts exportent le paquet même quand des tests échouent. `warn` et non `error` (ici et
+      # dans les deux autres jobs) : un échec avant la création du paquet ne doit pas masquer l'échec initial.
+      - name: Upload result bundle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests.xcresult
+          path: artifacts/test-results/unit-tests.xcresult
+          if-no-files-found: warn
+
+  ios-ui-core:
+    # Le noyau tourne sur chaque poussée : c'est le filet entre deux passes complètes.
+    name: iOS UI core
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_APP="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          echo "Using $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run UI core journeys
+        run: tools/automation/run_ui_core.sh
+
+      - name: Upload result bundle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-core.xcresult
+          path: artifacts/test-results/ui-core.xcresult
+          if-no-files-found: warn
+
+  ios-ui-full:
+    # Toute la cible PeculeUITests, hors captures (PeculeScreenshotUITests) : environ 25 min en série,
+    # donc réservée à main et aux pull requests.
+    name: iOS UI full
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_APP="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          echo "Using $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run the full UI suite
+        run: tools/automation/run_ui_smoke.sh
+
+      - name: Upload result bundle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-full.xcresult
+          path: artifacts/test-results/ui-smoke.xcresult
+          if-no-files-found: warn
+
+  gateway:
+    name: Gateway (typecheck + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gateway/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test

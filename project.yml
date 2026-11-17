@@ -1,0 +1,88 @@
+name: Pecule
+options:
+  bundleIdPrefix: com.nicolas
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    TARGETED_DEVICE_FAMILY: 1
+    MARKETING_VERSION: 1.0
+    CURRENT_PROJECT_VERSION: 1
+    PECULE_IDENTITY_GATEWAY_URL: ""
+    PECULE_IDENTITY_ENTITLEMENTS: ""
+targets:
+  Pecule:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Pecule
+    info:
+      path: Pecule/Info.plist
+      properties:
+        CFBundleDisplayName: Pécule
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        PeculeIdentityGatewayURL: $(PECULE_IDENTITY_GATEWAY_URL)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        "UISupportedInterfaceOrientations~iphone":
+          - UIInterfaceOrientationPortrait
+        CFBundleURLTypes:
+          - CFBundleURLName: com.nicolas.LifeOS
+            CFBundleURLSchemes:
+              - lifeos
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.nicolas.LifeOS.bankRefresh
+    settings:
+      base:
+        DEVELOPMENT_TEAM: AJSF8Z4YWZ
+        PRODUCT_BUNDLE_IDENTIFIER: com.nicolas.LifeOS
+        PRODUCT_NAME: Pecule
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: $(PECULE_IDENTITY_ENTITLEMENTS)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  PeculeTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: PeculeTests
+    dependencies:
+      - target: Pecule
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nicolas.PeculeTests
+        GENERATE_INFOPLIST_FILE: YES
+  PeculeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: PeculeUITests
+    dependencies:
+      - target: Pecule
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nicolas.PeculeUITests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Pecule:
+    build:
+      targets:
+        Pecule: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: PeculeTests
+        # Parallélisme volontairement désactivé : mesuré le 16 septembre, trois clones rendent chaque
+        # parcours 3x plus lent (contention CPU) et font échouer le lancement du runner. Le gain de
+        # temps vient du noyau restreint (run_ui_core.sh), pas de la répartition.
+        - name: PeculeUITests

@@ -1,0 +1,21 @@
+# Local-only preparation of lot 1. Do not deploy this file.
+# Apple login routes exist, but real Apple configuration, iOS login and legacy
+# ownership migration are not wired yet: not ready for friends.
+name = "pecule-multi-user-local"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+ENVIRONMENT = "local"
+AUTH_MODE = "multi_user"
+EB_BASE_URL = "https://api.enablebanking.com"
+APP_CALLBACK_URL = "lifeos://link"
+DATA_PROTECTION_EMAIL = "privacy@example.test"
+
+[[durable_objects.bindings]]
+name = "IDENTITY_VAULT"
+class_name = "IdentityVault"
+
+[[migrations]]
+tag = "identity-v1"
+new_sqlite_classes = ["IdentityVault"]

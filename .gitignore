@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Test result bundles (generated)
+*.xcresult/
+artifacts/
+
+# CocoaPods / Carthage (unused if not present, harmless)
+Pods/
+Carthage/Build/
+
+# Env / secrets
+.env
+.env.*
+secrets/
+
+# Claude Code et agents : réglages personnels, worktrees, sorties d'outils
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/worktrees/
+.playwright-cli/
+
+# Journaux
+*.log
+
+# Clés et secrets
+*.pem
+*.p8
+*.p12
+*.key
+.dev.vars
+
+# Passerelle (Node, Wrangler)
+.wrangler/
+node_modules/
